@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## MCP Security Incidents
 
-## Getting Started
+This app crawls security advisories, normalizes them into Supabase, and renders incident summaries with Next.js.
 
-First, run the development server:
+### Prerequisites
+- Node 18+ (Next.js App Router)
+- Supabase project with tables: `raw_items`, `incidents`, `incident_sources`, `summaries`
+- Firecrawl instance (cloud or self-hosted)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+### Environment Variables
+Create `.env.local` with at least:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+PIPELINE_TOKEN=super-secret-token
+FIRECRAWL_API_URL=https://api.firecrawl.dev
+FIRECRAWL_API_KEY=fc_xxxx
+# optional
+FIRECRAWL_TIMEOUT_MS=15000
+FIRECRAWL_RETRIES=3
+OPENAI_API_KEY=sk-...
+REVALIDATE_TOKEN=...
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Running Locally
+```bash
+npm install
+npm run dev
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Trigger the crawl pipeline securely:
+```bash
+curl -XPOST http://localhost:3000/api/pipeline/crawl \
+  -H "Authorization: Bearer $PIPELINE_TOKEN"
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Firecrawl Integration
+- `lib/mcp-firecrawl.ts` calls `POST ${FIRECRAWL_API_URL}/scrapeBatch`
+- Requests return markdown (`extractor: 'markdown'`) and retry on transient failures
+- Ensure your Firecrawl project is configured for the seeds in `app/api/pipeline/crawl/route.ts`
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Summaries
+Running `/api/pipeline/summarize` stores one summary per incident, using the rule-based fallback when no LLM key is present.
