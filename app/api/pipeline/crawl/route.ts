@@ -351,7 +351,7 @@ function extractTag(block: string, tag: string): string | undefined {
 
 function decodeXml(value: string): string {
   return value
-    .replace(/<!\[CDATA\[(.*?)\]\]>/gis, '$1')
+    .replace(/<!\[CDATA\[(.*?)\]\]>/gs, '$1')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&amp;/g, '&')

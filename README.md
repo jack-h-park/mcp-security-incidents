@@ -35,6 +35,11 @@ npm install
 npm run dev
 ```
 
+### Admin Console
+- Visit `/admin` while the dev server is running to trigger crawl/summarize pipelines.
+- The server must have `PIPELINE_TOKEN` configured; the admin page invokes the existing API routes using that token.
+- Optional overrides: `INTERNAL_BASE_URL` if the app is deployed behind a proxy.
+
 Trigger the crawl pipeline securely:
 ```bash
 curl -XPOST http://localhost:3000/api/pipeline/crawl \

@@ -168,7 +168,7 @@ export async function firecrawlScrapeBatch(
         }
       })
       const text = extractTextPayload(result)
-      const payload = JSON.parse(text)
+      const payload = JSON.parse(text) as unknown
       items.push(normaliseFirecrawlOutput(url, payload))
     } catch (error) {
       console.error('[firecrawl:mcp] scrape failed', { url, error })
@@ -177,4 +177,3 @@ export async function firecrawlScrapeBatch(
 
   return { items }
 }
-
