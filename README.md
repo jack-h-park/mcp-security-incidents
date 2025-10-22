@@ -18,6 +18,10 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000
 PIPELINE_TOKEN=super-secret-token
 FIRECRAWL_API_URL=https://api.firecrawl.dev
 FIRECRAWL_API_KEY=fc_xxxx
+FIRECRAWL_MCP_COMMAND=npx
+FIRECRAWL_MCP_ARGS=["-y","firecrawl-mcp"]
+# optional extra env for the MCP process
+# FIRECRAWL_MCP_ENV={"NODE_EXTRA_CA_CERTS":"/path/to/cert.pem"}
 # optional
 FIRECRAWL_TIMEOUT_MS=15000
 FIRECRAWL_RETRIES=3
@@ -38,8 +42,9 @@ curl -XPOST http://localhost:3000/api/pipeline/crawl \
 ```
 
 ### Firecrawl Integration
-- `lib/mcp-firecrawl.ts` calls `POST ${FIRECRAWL_API_URL}/scrapeBatch`
-- Requests return markdown (`extractor: 'markdown'`) and retry on transient failures
+- The crawler now talks to the `firecrawl-mcp` server over MCP stdio (`npx -y firecrawl-mcp` by default)
+- Configure the MCP binary via `FIRECRAWL_MCP_COMMAND`, `FIRECRAWL_MCP_ARGS`, and `FIRECRAWL_MCP_ENV`
+- API credentials/URL are forwarded to the MCP process from the current environment
 - Ensure your Firecrawl project is configured for the seeds in `app/api/pipeline/crawl/route.ts`
 
 ### Summaries

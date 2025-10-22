@@ -16,7 +16,7 @@ export default async function Page() {
       <ul style={{display:'grid', gap:12, marginTop:16}}>
         {(data ?? []).map(x => (
           <li key={x.id} style={{border:'1px solid #eee', borderRadius:8, padding:12}}>
-            <a href={`/incidents/${x.id}`} style={{fontFamily:'monospace'}}>
+            <a href={`./incidents/${x.id}`} style={{fontFamily:'monospace'}}>
               {x.canonical_key}
             </a>
             {x.kev && <span style={{marginLeft:8}}>🔥 KEV</span>}
