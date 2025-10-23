@@ -1,48 +1,52 @@
 // app/api/pipeline/summarize/route.ts
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { summarize } from '@/lib/summarize'
+import { createSummaryRun } from '@/lib/summary-runner'
+import { getSummarizerOption } from '@/lib/settings'
 import { authenticatePipelineRequest } from '@/lib/pipeline-auth'
 
 export async function POST(req: Request) {
   const authError = authenticatePipelineRequest(req)
   if (authError) return authError
+  const provider = await getSummarizerOption()
   const { data: latest } = await supabaseAdmin
     .from('incidents')
-    .select('id, title')
+    .select('id')
     .order('updated_at', { ascending: false })
     .limit(10)
 
+  const changedIncidentIds: string[] = []
   for (const inc of latest ?? []) {
-    const { data: src } = await supabaseAdmin
-      .from('incident_sources').select('raw_id').eq('incident_id', inc.id).limit(1)
-    if (!src?.[0]) continue
-    const { data: raw } = await supabaseAdmin
-      .from('raw_items').select('title, body_markdown').eq('id', src[0].raw_id).single()
-    if (!raw) continue
+    const run = await createSummaryRun({
+      incidentId: inc.id,
+      providerOverride: provider,
+      triggeredBy: 'pipeline'
+    })
 
-    const sum = await summarize({ title: inc.title, text: raw.body_markdown ?? '' })
-    await supabaseAdmin
-      .from('summaries')
-      .upsert({
-        incident_id: inc.id,
-        tl_dr: sum.tl_dr,
-        summary_md: sum.summary_md,
-        citations: sum.citations ?? []
-      }, { onConflict: 'incident_id' })
+    if (!run.ok) {
+      console.warn('[pipeline:summarize] failed', {
+        incidentId: inc.id,
+        error: run.error
+      })
+      continue
+    }
 
-    // 해당 페이지들 캐시 무효화
-    await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/revalidate`, {
-      method:'POST',
-      headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify({ token: process.env.REVALIDATE_TOKEN, path:'/' })
-    }).catch(()=>{})
+    changedIncidentIds.push(inc.id)
 
     await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/revalidate`, {
-      method:'POST',
-      headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify({ token: process.env.REVALIDATE_TOKEN, path:`/incidents/${inc.id}` })
-    }).catch(()=>{})
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: process.env.REVALIDATE_TOKEN, path: '/' })
+    }).catch(() => {})
+
+    await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/revalidate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        token: process.env.REVALIDATE_TOKEN,
+        path: `/incidents/${inc.id}`
+      })
+    }).catch(() => {})
   }
 
-  return Response.json({ ok: true })
+  return Response.json({ ok: true, provider, changed: changedIncidentIds })
 }
