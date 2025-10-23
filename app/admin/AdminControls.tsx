@@ -57,36 +57,27 @@ export function AdminControls({ actions }: { actions: PipelineActionState[] }) {
       {result && (
         <div
           style={{
-            border: "1px solid #eee",
-            borderRadius: 8,
+            border: "1px solid var(--border-subtle)",
+            borderRadius: 10,
             padding: 16,
-            background: result.ok ? "#f6ffed" : "#fff1f0"
+            background: result.ok ? "var(--surface-success)" : "var(--surface-error)",
+            boxShadow: "0 1px 2px rgba(15, 23, 42, 0.08)"
           }}
         >
           <header style={{ marginBottom: 8, fontWeight: 600 }}>
             Result ({result.status}) {lastUpdated && "- " + lastUpdated}
           </header>
           {result.error && (
-            <p style={{ color: "#c00", marginBottom: 8 }}>{result.error}</p>
+            <p style={{ color: "var(--text-error)", marginBottom: 8 }}>{result.error}</p>
           )}
-          <pre
-            style={{
-              background: "#fff",
-              border: "1px solid #ddd",
-              borderRadius: 6,
-              padding: 12,
-              maxHeight: 280,
-              overflow: "auto",
-              fontSize: 12
-            }}
-          >
+          <pre style={{ maxHeight: 280, overflow: "auto", fontSize: 12 }}>
             {JSON.stringify(result.body, null, 2)}
           </pre>
         </div>
       )}
 
       {error && (
-        <p style={{ color: "#c00" }}>
+        <p style={{ color: "var(--text-error)" }}>
           {error}
         </p>
       )}
