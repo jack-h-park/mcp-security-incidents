@@ -1,5 +1,8 @@
 // app/admin/page.tsx
-import { supabaseAdmin } from '@/lib/supabase-admin'
+import {
+  getSupabaseAdmin,
+  hasSupabaseAdminConfig
+} from '@/lib/supabase-admin'
 import { AdminControls } from './AdminControls'
 import { IncidentSummaryManager } from './IncidentSummaryManager'
 import { SummarizerSettingsForm } from './SummarizerSettingsForm'
@@ -9,12 +12,25 @@ import type { IncidentSummaryAdminRow, PipelineActionState } from './types'
 export const dynamic = 'force-dynamic'
 
 export default async function AdminPage() {
+  if (!hasSupabaseAdminConfig()) {
+    return (
+      <main style={{ padding: 24, maxWidth: 720, margin: '0 auto' }}>
+        <h1>Pipeline Control</h1>
+        <p style={{ color: 'var(--muted)' }}>
+          Supabase admin credentials are not available. Set{' '}
+          <code>NEXT_PUBLIC_SUPABASE_URL</code> (or <code>SUPABASE_URL</code>) and{' '}
+          <code>SUPABASE_SERVICE_ROLE_KEY</code> to access admin controls.
+        </p>
+      </main>
+    )
+  }
   const { option } = await loadSummarizerPreference()
   const actions: PipelineActionState[] = [
     { label: 'Run Crawl Pipeline', handler: runCrawl },
     { label: 'Run Summarize Pipeline', handler: runSummarize }
   ]
 
+  const supabaseAdmin = getSupabaseAdmin()
   const { data: incidentsData } = await supabaseAdmin
     .from('incidents')
     .select(`

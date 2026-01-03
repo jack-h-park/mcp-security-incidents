@@ -1,5 +1,8 @@
 // app/incidents/[id]/page.tsx
-import { supabaseAdmin } from '@/lib/supabase-admin'
+import {
+  getSupabaseAdmin,
+  hasSupabaseAdminConfig
+} from '@/lib/supabase-admin'
 import { summarizerLabel, type SummarizerOption } from '@/lib/summarizer-options'
 
 export const revalidate = 300
@@ -20,6 +23,28 @@ export default async function IncidentPage({
 }: {
   params: { id: string }
 }) {
+  if (!hasSupabaseAdminConfig()) {
+    return (
+      <div
+        style={{
+          padding: 24,
+          maxWidth: 720,
+          margin: '0 auto',
+          background: 'var(--surface)',
+          borderRadius: 12,
+          border: '1px solid var(--border-subtle)',
+          boxShadow: '0 1px 2px rgba(15, 23, 42, 0.08)'
+        }}
+      >
+        <p style={{ color: 'var(--muted)' }}>
+          Supabase admin credentials are missing. Configure
+          <code>SUPABASE_URL</code> (or <code>NEXT_PUBLIC_SUPABASE_URL</code>) and{' '}
+          <code>SUPABASE_SERVICE_ROLE_KEY</code> to view incidents.
+        </p>
+      </div>
+    )
+  }
+  const supabaseAdmin = getSupabaseAdmin()
   const [{ data: incident }, { data: summaries }] = await Promise.all([
     supabaseAdmin.from('incidents').select('*').eq('id', params.id).maybeSingle(),
     supabaseAdmin

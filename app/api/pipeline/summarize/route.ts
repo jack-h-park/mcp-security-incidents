@@ -1,5 +1,8 @@
 // app/api/pipeline/summarize/route.ts
-import { supabaseAdmin } from '@/lib/supabase-admin'
+import {
+  getSupabaseAdmin,
+  hasSupabaseAdminConfig
+} from '@/lib/supabase-admin'
 import { createSummaryRun } from '@/lib/summary-runner'
 import { getSummarizerOption } from '@/lib/settings'
 import { authenticatePipelineRequest } from '@/lib/pipeline-auth'
@@ -7,7 +10,18 @@ import { authenticatePipelineRequest } from '@/lib/pipeline-auth'
 export async function POST(req: Request) {
   const authError = authenticatePipelineRequest(req)
   if (authError) return authError
+  if (!hasSupabaseAdminConfig()) {
+    return Response.json(
+      {
+        ok: false,
+        error:
+          'Supabase admin credentials are not configured. Set NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.'
+      },
+      { status: 503 }
+    )
+  }
   const provider = await getSummarizerOption()
+  const supabaseAdmin = getSupabaseAdmin()
   const { data: latest } = await supabaseAdmin
     .from('incidents')
     .select('id')

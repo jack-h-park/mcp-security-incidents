@@ -1,10 +1,28 @@
 // app/page.tsx
-import { supabaseAdmin } from '@/lib/supabase-admin'
+import {
+  getSupabaseAdmin,
+  hasSupabaseAdminConfig
+} from '@/lib/supabase-admin'
 import { summarizerLabel } from '@/lib/summarizer-options'
 
 export const revalidate = 300 // ISR: 5 minutes
 
 export default async function Page() {
+  if (!hasSupabaseAdminConfig()) {
+    return (
+      <main
+        style={{ padding: 24, maxWidth: 900, margin: '0 auto' }}
+      >
+        <h1>Security Incidents</h1>
+        <p style={{ color: 'var(--muted)' }}>
+          Supabase admin credentials are not configured. Set{' '}
+          <code>NEXT_PUBLIC_SUPABASE_URL</code> (or <code>SUPABASE_URL</code>{' '}
+          and <code>SUPABASE_SERVICE_ROLE_KEY</code>) to explore incidents.
+        </p>
+      </main>
+    )
+  }
+  const supabaseAdmin = getSupabaseAdmin()
   const { data } = await supabaseAdmin
     .from('incidents')
     .select('id, canonical_key, title, kev, cvss_base, updated_at, last_summarized_at, last_summary_provider, last_summary_model')

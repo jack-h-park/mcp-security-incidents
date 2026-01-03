@@ -1,5 +1,5 @@
 // lib/settings.ts
-import { supabaseAdmin } from '@/lib/supabase-admin'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import {
   DEFAULT_SUMMARIZER_OPTION,
   isSummarizerOption,
@@ -30,6 +30,7 @@ function coerceSummarizerOption(input: unknown): SummarizerOption | null {
 
 export async function getSummarizerOption(): Promise<SummarizerOption> {
   try {
+    const supabaseAdmin = getSupabaseAdmin()
     const { data, error } = await supabaseAdmin
       .from(SUMMARIZER_SETTINGS_TABLE)
       .select('value')
@@ -57,6 +58,7 @@ export async function setSummarizerOption(
   option: SummarizerOption
 ): Promise<{ ok: boolean; error?: string }> {
   try {
+    const supabaseAdmin = getSupabaseAdmin()
     const { error } = await supabaseAdmin
       .from(SUMMARIZER_SETTINGS_TABLE)
       .upsert(

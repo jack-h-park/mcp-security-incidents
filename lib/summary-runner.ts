@@ -1,5 +1,5 @@
 // lib/summary-runner.ts
-import { supabaseAdmin } from '@/lib/supabase-admin'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { summarize, type SummaryResult } from '@/lib/summarize'
 import type { SummarizerOption } from '@/lib/summarizer-options'
 
@@ -32,6 +32,7 @@ export async function createSummaryRun({
     }
   | { ok: false; error: string }
 > {
+  const supabaseAdmin = getSupabaseAdmin()
   const { data: incident, error: incidentError } = await supabaseAdmin
     .from('incidents')
     .select('id, title')

@@ -1,7 +1,10 @@
 // lib/mcp-firecrawl.ts
 import { getMcpClient } from '@/lib/mcp-client'
 import type { StdioServerParameters } from '@modelcontextprotocol/sdk/client/stdio.js'
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
+import type {
+  CallToolResult,
+  CompatibilityCallToolResult
+} from '@modelcontextprotocol/sdk/types.js'
 
 type FirecrawlItem = {
   url: string
@@ -70,17 +73,23 @@ function getServerParameters(): StdioServerParameters {
   }
 }
 
-function extractTextPayload(result: CallToolResult): string {
+function extractTextPayload(
+  result: CallToolResult | CompatibilityCallToolResult
+): string {
+  const contentParts =
+    'content' in result && Array.isArray(result.content)
+      ? result.content
+      : undefined
   if (result.isError) {
     const message =
-      result.content
+      contentParts
         ?.filter(part => part.type === 'text')
         ?.map(part => ('text' in part ? part.text : ''))
         .join('\n')
         .trim() || 'Unknown Firecrawl MCP error'
     throw new Error(message)
   }
-  for (const part of result.content ?? []) {
+  for (const part of contentParts ?? []) {
     if (part.type === 'text' && 'text' in part && part.text?.trim()) {
       return part.text
     }

@@ -3,7 +3,7 @@
 
 import { revalidatePath } from 'next/cache'
 
-import { supabaseAdmin } from '@/lib/supabase-admin'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { getSummarizerOption, setSummarizerOption } from '@/lib/settings'
 import { createSummaryRun } from '@/lib/summary-runner'
 import { SummarizerOption } from '@/lib/summarizer-options'
@@ -143,6 +143,7 @@ export async function deleteSummaryRun({
   | { ok: true; latest?: { id: string; ran_at: string | null; provider: SummarizerOption | null; model: string | null } }
   | { ok: false; error: string }
 > {
+  const supabaseAdmin = getSupabaseAdmin()
   const { error } = await supabaseAdmin
     .from('summaries')
     .delete()

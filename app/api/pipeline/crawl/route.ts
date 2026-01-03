@@ -1,5 +1,8 @@
 // app/api/pipeline/crawl/route.ts
-import { supabaseAdmin } from '@/lib/supabase-admin'
+import {
+  getSupabaseAdmin,
+  hasSupabaseAdminConfig
+} from '@/lib/supabase-admin'
 import { firecrawlScrapeBatch } from '@/lib/mcp-firecrawl'
 import { extractCVEs, hashContent, makeCanonicalKey } from '@/lib/normalize'
 import { authenticatePipelineRequest } from '@/lib/pipeline-auth'
@@ -351,7 +354,7 @@ function extractTag(block: string, tag: string): string | undefined {
 
 function decodeXml(value: string): string {
   return value
-    .replace(/<!\[CDATA\[(.*?)\]\]>/gs, '$1')
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&amp;/g, '&')
@@ -380,6 +383,17 @@ function isRecent(dateStr: string | undefined, index: number): boolean {
 export async function POST(req: Request) {
   const authError = authenticatePipelineRequest(req)
   if (authError) return authError
+  if (!hasSupabaseAdminConfig()) {
+    return Response.json(
+      {
+        ok: false,
+        error:
+          'Supabase admin credentials are not configured. Set NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.'
+      },
+      { status: 503 }
+    )
+  }
+  const supabaseAdmin = getSupabaseAdmin()
 
   const seeds = [
     'https://api.msrc.microsoft.com/update-guide/rss',
